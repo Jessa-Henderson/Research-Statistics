@@ -1,0 +1,923 @@
+---
+title: "2YP_Analysis_AERA"
+author: "Jessa Henderson"
+date: "1/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(plyr)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(likert)
+library(ggplot2)
+```
+
+## Data Preprocessing: Loading the Data
+A CSV file from the survey was uploaded into R Studio for preprocessing and cleaning.
+
+Prior to cleaning, the dataset contained 93 observations and 73 variables
+
+```{r Setup, echo=TRUE}
+#Load CSV
+CFResearch_Full <- read.csv('2YP_Data.csv', header = TRUE)
+
+#Convert to dataframe
+CFResearch_df <- data.frame(CFResearch_Full)
+
+#Quick Summary of the dataframe
+str(CFResearch_df)
+summary(CFResearch_df)
+
+#Create subset of data for hypothesis testing
+#Includes all TAM3 and CF inventory scores. Removes demographic variables and use measured via self-reported hours.
+TAM3_CF <- CFResearch_df[,c(5:11, 13:73)]
+
+```
+
+##Data Cleaning
+Code is inefficient but goes variable by variable to ensure appropriate adjustments.
+For each variable, the data was turned to a factor, removed all text, added NAs to blanks, and reversed the scale for questions that were written in the negative. 
+
+```{r Cleaning USE, echo=FALSE}
+#Cleaning  for the variable "USE"
+
+#USE2a - use LMS to share content and documents
+TAM3_CF$USE2a <- factor(TAM3_CF$USE2a, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2a)
+head(TAM3_CF$USE2a)
+
+#USE2b - Use LMS gradebook
+TAM3_CF$USE2b <- factor(TAM3_CF$USE2b, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2b)
+head(TAM3_CF$USE2b)
+
+
+#USE2c - Use LMS calendar
+TAM3_CF$USE2c <- factor(TAM3_CF$USE2c, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2c)
+head(TAM3_CF$USE2c)
+
+#USE2d - Use LMS quiz tool
+TAM3_CF$USE2d <- factor(TAM3_CF$USE2d, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2d)
+head(TAM3_CF$USE2d)
+
+#USE2e - Use LMS discussion boards
+TAM3_CF$USE2e <- factor(TAM3_CF$USE2e, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2e)
+head(TAM3_CF$USE2e)
+
+#USE2f - Use LMS announcements
+TAM3_CF$USE2f <- factor(TAM3_CF$USE2f, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2f)
+head(TAM3_CF$USE2f)
+
+#USE2g - use of LMS for assignments for student submission
+#Placing "NA" in blank cells 
+table(TAM3_CF$USE2g)
+levels(TAM3_CF$USE2g)
+TAM3_CF$USE2g[TAM3_CF$USE2g == ""] <- NA
+summary(TAM3_CF$USE2g)
+TAM3_CF$USE2g <- factor(TAM3_CF$USE2g, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$USE2g)
+head(TAM3_CF$USE2g)
+
+#descriptive use visualization
+#Create USE dataframe
+USE <- subset.data.frame(TAM3_CF[1:7])
+USE <- USE %>%
+rename("documents" = USE2a, 
+        "gradebook" = USE2b,
+        "calendar" = USE2c,
+        "quiz" = USE2d,
+        "discussion" = USE2e,
+        "announcements" = USE2f,
+        "submit assignments" = USE2g)
+# Create a likert object
+use_likert <-  likert(USE)
+
+# Figure 
+USEPlot <- plot(use_likert, ordered = FALSE, group.order = names(USE))
+#ggsave("Use.png", width = 10, height = 5)
+print(USEPlot)
+
+```
+
+```{r Cleaning Behavioral Intent, echo=FALSE}
+
+#BI1 - General intention to use LMS in current school year
+TAM3_CF$BI1 <- factor(TAM3_CF$BI1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+summary(TAM3_CF$BI1)
+head(TAM3_CF$BI1)
+TAM3_CF$BI1 <- revalue(TAM3_CF$BI1, c("1"="strongly disagree", "2"="moderately disagree", "3"="somewhat disagree", "4"="neutral (neither agree or disagree)", "5"="somewhat agree", "6"="moderately agree", "7"="strongly agree"))
+
+#BI2a - Intention to share content and documents
+TAM3_CF$BI2a[TAM3_CF$BI2a == ""] <- NA
+TAM3_CF$BI2a <- factor(TAM3_CF$BI2a, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2a)
+head(TAM3_CF$BI2a)
+
+#BI2b - Intention to use LMS gradebook
+TAM3_CF$BI2b[TAM3_CF$BI2b == ""] <- NA
+TAM3_CF$BI2b <- factor(TAM3_CF$BI2b, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2b)
+head(TAM3_CF$BI2b)
+
+#BI2c - Intention to use LMS calendar
+TAM3_CF$BI2c[TAM3_CF$BI2c == ""] <- NA
+TAM3_CF$BI2c <- factor(TAM3_CF$BI2c, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2c)
+head(TAM3_CF$BI2c)
+
+#BI2d - Intention to use LMS quiz tool
+TAM3_CF$BI2d[TAM3_CF$BI2d == ""] <- NA
+TAM3_CF$BI2d <- factor(TAM3_CF$BI2d, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2d)
+head(TAM3_CF$BI2d)
+
+#BI2e - Intention to use LMS discussion boards
+TAM3_CF$BI2e <- factor(TAM3_CF$BI2e, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2e)
+head(TAM3_CF$BI2e)
+
+#BI2f - Intention to use LMS announcements
+TAM3_CF$BI2f[TAM3_CF$BI2f == ""] <- NA
+TAM3_CF$BI2f <- factor(TAM3_CF$BI2f, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2f)
+head(TAM3_CF$BI2f)
+
+#BI2g - Intention to use LMS for assignments for student submission
+TAM3_CF$BI2g <- factor(TAM3_CF$BI2g, levels = c("strongly disagree", "moderately disagree", "somewhat disagree", "neutral (neither agree or disagree)", "somewhat agree", "moderately agree", "strongly agree"))
+summary(TAM3_CF$BI2g)
+head(TAM3_CF$BI2g)
+
+#descriptive use visualization
+#Create Intent dataframe
+INTENT <- subset.data.frame(TAM3_CF[8:15])
+
+INTENT <- INTENT %>%
+  rename("overall" = BI1,
+         "documents" = BI2a,
+         "gradebook" = BI2b,
+         "calendar" = BI2c,
+         "quiz" = BI2d,
+         "discussion" = BI2e,
+         "announcements" = BI2f,
+         "submit assignments" = BI2g)
+
+# Create a likert object
+intent_likert <-  likert(INTENT)
+
+# Figure 
+BIPlot <- plot(intent_likert, ylab = "Behavioral Intent", ordered = FALSE, group.order = names(INTENT))
+#ggsave("Intent.png", width = 10, height = 5)
+print(BIPlot)
+
+```
+
+```{r Cleaning Perceived Ease of Use, echo=FALSE}
+
+#PEU1 - LMS clear & understandable
+TAM3_CF$PEU1 <- as.factor(TAM3_CF$PEU1)
+summary(TAM3_CF$PEU1)
+TAM3_CF$PEU1 <- factor(TAM3_CF$PEU1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEU2 - Does not require a lot of mental effort
+TAM3_CF$PEU2 <- as.factor(TAM3_CF$PEU2)
+summary(TAM3_CF$PEU2)
+TAM3_CF$PEU2 <- factor(TAM3_CF$PEU2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEU3 - Easy to use
+TAM3_CF$PEU3 <- as.factor(TAM3_CF$PEU3)
+summary(TAM3_CF$PEU3)
+TAM3_CF$PEU3 <- factor(TAM3_CF$PEU3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEU4 - Easy to do what I want
+TAM3_CF$PEU4 <- as.factor(TAM3_CF$PEU4)
+summary(TAM3_CF$PEU4)
+TAM3_CF$PEU4 <- factor(TAM3_CF$PEU4, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create PEU dataframe
+PEU <- subset.data.frame(TAM3_CF[16:19])
+
+PEU <- PEU %>%
+  rename("Clear & understandable" = PEU1,
+         "Little mental effort" = PEU2,
+         "Easy to use" = PEU3,
+         "Easy to do what I want" = PEU4)
+
+# Create a likert object
+PEU_likert <-  likert(PEU)
+
+# Figure 
+PEUPlot <- plot(PEU_likert, ordered = FALSE, group.order = names(PEU))
+#ggsave("PEU.png", width = 10, height = 5)
+print(PEUPlot)
+
+```
+
+
+```{r Cleaning Perceived Usefulness, echo=FALSE}
+
+#PU1 - Improves job performance
+TAM3_CF$PU1 <- as.factor(TAM3_CF$PU1)
+summary(TAM3_CF$PU1)
+TAM3_CF$PU1 <- factor(TAM3_CF$PU1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PU2 - Increases productivity
+TAM3_CF$PU2 <- as.factor(TAM3_CF$PU2)
+summary(TAM3_CF$PU2)
+TAM3_CF$PU2 <- factor(TAM3_CF$PU2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PU3 - Enhances job effectiveness
+TAM3_CF$PU3 <- as.factor(TAM3_CF$PU3)
+summary(TAM3_CF$PU3)
+TAM3_CF$PU3 <- factor(TAM3_CF$PU3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PU4 - Useful
+TAM3_CF$PU4 <- as.factor(TAM3_CF$PU4)
+summary(TAM3_CF$PU4)
+TAM3_CF$PU4 <- factor(TAM3_CF$PU4, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create PU dataframe
+PU <- subset.data.frame(TAM3_CF[20:23])
+
+PU <- PU %>%
+  rename("Improves job performance" = PU1,
+         "Increases productivity" = PU2,
+         "Enhances job effectiveness" = PU3,
+         "Useful" = PU4)
+
+# Create a likert object
+PU_likert <-  likert(PU)
+
+# Figure 
+PUPlot <- plot(PU_likert, ordered = FALSE, group.order = names(PU))
+#ggsave("PU.png", width = 10, height = 5)
+print(PUPlot)
+
+```
+
+```{r Cleaning Computer Self Efficacy, echo=FALSE}
+
+#Computer self-efficacy contains numbers and text so the variable was changed to just extract the numbers. 
+
+#CSE1 - Could use LMS if no one was around for help
+TAM3_CF$CSE1 <- sub("^(\\d+).*", "\\1", TAM3_CF$CSE1)
+TAM3_CF$CSE1 <- as.factor(TAM3_CF$CSE1)
+TAM3_CF$CSE1[TAM3_CF$CSE1 == ""] <- NA
+summary(TAM3_CF$CSE1)
+TAM3_CF$CSE1 <- factor(TAM3_CF$CSE1, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"))
+
+#CSE2 - Could use LMS if had built-in help facility
+TAM3_CF$CSE2 <- sub("^(\\d+).*", "\\1", TAM3_CF$CSE2)
+TAM3_CF$CSE2 <- as.factor(TAM3_CF$CSE2)
+TAM3_CF$CSE2[TAM3_CF$CSE2 == ""] <- NA
+summary(TAM3_CF$CSE2)
+TAM3_CF$CSE2 <- factor(TAM3_CF$CSE2, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"))
+
+
+#CSE3 - Could use LMS if someone showed me how first
+TAM3_CF$CSE3 <- sub("^(\\d+).*", "\\1", TAM3_CF$CSE3)
+TAM3_CF$CSE3 <- as.factor(TAM3_CF$CSE3)
+TAM3_CF$CSE3[TAM3_CF$CSE3 == ""] <- NA
+summary(TAM3_CF$CSE3)
+TAM3_CF$CSE3 <- factor(TAM3_CF$CSE3, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"))
+
+#CSE4 - could use LMS if had used similar programs before to do the same job
+TAM3_CF$CSE4 <- sub("^(\\d+).*", "\\1", TAM3_CF$CSE4)
+TAM3_CF$CSE4 <- as.factor(TAM3_CF$CSE4)
+TAM3_CF$CSE4[TAM3_CF$CSE4 == ""] <- NA
+summary(TAM3_CF$CSE4)
+TAM3_CF$CSE4 <- factor(TAM3_CF$CSE4, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"))
+
+#descriptive use visualization
+#Create CSE dataframe
+CSE <- subset.data.frame(TAM3_CF[24:27])
+
+CSE <- CSE %>%
+  rename("Use w/o help" = CSE1,
+         "Use if help at school" = CSE2,
+         "Use if showed" = CSE3,
+         "Use if similar in past" = CSE4)
+
+# Create a likert object
+CSE_likert <-  likert(CSE)
+
+# Figure 
+CSEPlot <- plot(CSE_likert, ordered = FALSE, group.order = names(CSE))
+#ggsave("CSE.png", width = 10, height = 5)
+print(CSEPlot)
+```
+
+```{r Cleaning Perceptions of External Control, echo=FALSE}
+
+#PEC1 - Have control over use
+TAM3_CF$PEC1 <- as.factor(TAM3_CF$PEC1)
+summary(TAM3_CF$PEC1)
+TAM3_CF$PEC1 <- factor(TAM3_CF$PEC1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEC2 - Have necessary resources to use
+TAM3_CF$PEC2 <- as.factor(TAM3_CF$PEC2)
+summary(TAM3_CF$PEC2)
+TAM3_CF$PEC2 <- factor(TAM3_CF$PEC2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEC3 - Easy for me to use (w/knowledge, resources & opportunities)
+TAM3_CF$PEC3 <- as.factor(TAM3_CF$PEC3)
+summary(TAM3_CF$PEC3)
+TAM3_CF$PEC3 <- factor(TAM3_CF$PEC3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#PEC4 - Compatible with other systems
+#written in negative - flipped likert scale for data analysis
+TAM3_CF$PEC4 <- as.factor(TAM3_CF$PEC4)
+summary(TAM3_CF$PEC4)
+TAM3_CF$PEC4 <- factor(TAM3_CF$PEC4, levels = c("7", "6", "5", "4", "3", "2", "1"))
+
+#descriptive visualization
+#Create PEC dataframe
+PEC <- subset.data.frame(TAM3_CF[28:31])
+
+PEC <- PEC %>%
+  rename("Control over use" = PEC1,
+         "Have necessary resources" = PEC2,
+         "Easy to use w/available resources" = PEC3,
+         "Compatible with other systems" = PEC4)
+
+# Create a likert object
+PEC_likert <-  likert(PEC)
+
+# Figure 
+PECPlot <- plot(PEC_likert, ordered = FALSE, group.order = names(PEC))
+#ggsave("Control.png", width = 10, height = 5)
+print(PECPlot)
+
+```
+
+```{r Cleaning Perceived Enjoyment, echo=FALSE}
+
+#ENJ1 - Use is Enjoyable
+TAM3_CF$ENJ1 <- as.factor(TAM3_CF$ENJ1)
+summary(TAM3_CF$ENJ1)
+TAM3_CF$ENJ1 <- factor(TAM3_CF$ENJ1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#ENJ2 - Process is pleasant
+TAM3_CF$ENJ2 <- as.factor(TAM3_CF$ENJ2)
+summary(TAM3_CF$ENJ2)
+TAM3_CF$ENJ2 <- factor(TAM3_CF$ENJ2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#ENJ3 - Fun when using
+TAM3_CF$ENJ3 <- as.factor(TAM3_CF$ENJ3)
+summary(TAM3_CF$ENJ3)
+TAM3_CF$ENJ3 <- factor(TAM3_CF$ENJ3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create ENJ dataframe
+ENJ <- subset.data.frame(TAM3_CF[32:34])
+
+ENJ <- ENJ %>%
+  rename("Enjoyable" = ENJ1,
+         "Pleasant" = ENJ2,
+         "Fun" = ENJ3)
+
+# Create a likert object
+ENJ_likert <-  likert(ENJ)
+
+# Figure 
+ENJPlot <- plot(ENJ_likert, ordered = FALSE, group.order = names(ENJ))
+#ggsave("ENJ.png", width = 10, height = 5)
+print(ENJPlot)
+
+```
+
+
+```{r Cleaning Subjective Norm, echo=FALSE}
+
+#SN1 - Influential people think I should use
+TAM3_CF$SN1 <- as.factor(TAM3_CF$SN1)
+summary(TAM3_CF$SN1)
+TAM3_CF$SN1 <- factor(TAM3_CF$SN1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#SN2 - Important people think I should use
+TAM3_CF$SN2 <- as.factor(TAM3_CF$SN2)
+summary(TAM3_CF$SN2)
+TAM3_CF$SN2 <- factor(TAM3_CF$SN2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#SN3 - Admin helpful
+TAM3_CF$SN3 <- as.factor(TAM3_CF$SN3)
+summary(TAM3_CF$SN3)
+TAM3_CF$SN3 <- factor(TAM3_CF$SN3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#SN4 - School district supports LMS
+TAM3_CF$SN4 <- as.factor(TAM3_CF$SN4)
+summary(TAM3_CF$SN4)
+TAM3_CF$SN4 <- factor(TAM3_CF$SN4, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create SN dataframe
+SN <- subset.data.frame(TAM3_CF[35:38])
+
+SN <- SN %>%
+  rename("Influential people" = SN1,
+         "Important people think I should use" = SN2,
+         "Admin helpful" = SN3,
+         "District Supports" = SN4)
+
+# Create a likert object
+SN_likert <-  likert(SN)
+
+# Figure 
+SNPlot <- plot(SN_likert, ordered = FALSE, group.order = names(SN))
+#ggsave("SN.png", width = 10, height = 5)
+print(SNPlot)
+
+```
+
+```{r Cleaning Image, echo=FALSE}
+
+#IMG1 - Prestige from use
+TAM3_CF$IMG1 <- as.factor(TAM3_CF$IMG1)
+summary(TAM3_CF$IMG1)
+TAM3_CF$IMG1 <- factor(TAM3_CF$IMG1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#IMG2 - High profile from use
+TAM3_CF$IMG2 <- as.factor(TAM3_CF$IMG2)
+summary(TAM3_CF$IMG2)
+TAM3_CF$PU2 <- factor(TAM3_CF$IMG2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#IMG3 - Use is status symbol
+TAM3_CF$IMG3 <- as.factor(TAM3_CF$IMG3)
+summary(TAM3_CF$IMG3)
+TAM3_CF$IMG3 <- factor(TAM3_CF$IMG3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create IMG dataframe
+IMG <- subset.data.frame(TAM3_CF[39:41])
+
+IMG <- IMG %>%
+  rename("Use = Prestige" = IMG1,
+         "Use = High Profile" = IMG2,
+         "Use = Status" = IMG3)
+
+# Create a likert object
+IMG_likert <-  likert(IMG)
+
+# Figure 
+IMGPlot <- plot(IMG_likert, ordered = FALSE, group.order = names(IMG))
+#ggsave("IMG.png", width = 10, height = 5)
+print(IMGPlot)
+
+
+```
+
+```{r Cleaning Job Relevance, echo=FALSE}
+
+#REL1 - Important to use for job
+TAM3_CF$REL1 <- as.factor(TAM3_CF$REL1)
+summary(TAM3_CF$REL1)
+TAM3_CF$REL1 <- factor(TAM3_CF$REL1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#REL2 - Relevant to use for job
+TAM3_CF$REL2 <- as.factor(TAM3_CF$REL2)
+summary(TAM3_CF$REL2)
+TAM3_CF$REL2 <- factor(TAM3_CF$REL2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#REL3 - Pertinent to job-related tasks
+TAM3_CF$REL3 <- as.factor(TAM3_CF$REL3)
+summary(TAM3_CF$REL3)
+TAM3_CF$REL3 <- factor(TAM3_CF$REL3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create REL dataframe
+REL <- subset.data.frame(TAM3_CF[42:44])
+
+REL <- REL %>%
+  rename("Important for job" = REL1,
+         "Relevant for job" = REL2,
+         "Pertinent to job tasks" = REL3)
+
+# Create a likert object
+REL_likert <-  likert(REL)
+
+# Figure 
+RELPlot <- plot(REL_likert, ordered = FALSE, group.order = names(REL))
+#ggsave("REL.png", width = 10, height = 5)
+print(RELPlot)
+
+```
+
+```{r Cleaning Output Quality, echo=FALSE}
+
+#OUT1 - High quality output
+TAM3_CF$OUT1 <- as.factor(TAM3_CF$OUT1)
+summary(TAM3_CF$OUT1)
+TAM3_CF$OUT1 <- factor(TAM3_CF$OUT1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#OUT2 - Have no problem w/output quality
+TAM3_CF$OUT2 <- as.factor(TAM3_CF$OUT2)
+summary(TAM3_CF$OUT2)
+TAM3_CF$OUT2 <- factor(TAM3_CF$OUT2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#OUT3 - Excellent results
+TAM3_CF$OUT3 <- as.factor(TAM3_CF$OUT3)
+summary(TAM3_CF$OUT3)
+TAM3_CF$OUT3 <- factor(TAM3_CF$OUT3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create OUT dataframe
+OUT <- subset.data.frame(TAM3_CF[45:47])
+
+OUT <- OUT %>%
+  rename("High quality output" = OUT1,
+         "No prob w/output quality" = OUT2,
+         "Excellent results" = OUT3)
+
+# Create a likert object
+OUT_likert <-  likert(OUT)
+
+# Figure 
+OUTPlot <- plot(OUT_likert, ordered = FALSE, group.order = names(OUT))
+#ggsave("OUT.png", width = 10, height = 5)
+print(OUTPlot)
+
+```
+
+```{r Cleaning Result Demonstrability, echo=FALSE}
+
+#RES11 - No difficulty communicating results to others
+TAM3_CF$RES1 <- as.factor(TAM3_CF$RES1)
+summary(TAM3_CF$RES1)
+TAM3_CF$RES1 <- factor(TAM3_CF$RES1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#RES2 - Can communicate to others consequences of use
+TAM3_CF$RES2 <- as.factor(TAM3_CF$RES2)
+summary(TAM3_CF$RES2)
+TAM3_CF$RES2 <- factor(TAM3_CF$RES2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#RES3 - Results are apparent to me
+TAM3_CF$RES3 <- as.factor(TAM3_CF$RES3)
+summary(TAM3_CF$RES3)
+TAM3_CF$RES3 <- factor(TAM3_CF$RES3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#RES4 - Difficult to explain benefits 
+#NEGATIVE PHRASING
+TAM3_CF$RES4 <- as.factor(TAM3_CF$RES4)
+summary(TAM3_CF$RES4)
+TAM3_CF$RES4 <- factor(TAM3_CF$RES4, levels = c("7", "6", "5", "4", "3", "2", "1"))
+
+#descriptive visualization
+#Create RES dataframe
+RES <- subset.data.frame(TAM3_CF[48:51])
+
+RES <- RES %>%
+  rename("No difficulty communicating results" = RES1,
+         "Can communicate use consequences" = RES2,
+         "Apparent results" = RES3,
+         "Easy to explain benefits" = RES4)
+
+# Create a likert object
+RES_likert <-  likert(RES)
+
+# Figure 
+RESPlot <- plot(RES_likert, ordered = FALSE, group.order = names(RES))
+#ggsave("RES.png", width = 10, height = 5)
+print(RESPlot)
+
+```
+
+```{r Cleaning Voluntariness, echo=FALSE}
+
+#VOL1 - Voluntary use
+TAM3_CF$VOL1 <- as.factor(TAM3_CF$VOL1)
+summary(TAM3_CF$VOL1)
+TAM3_CF$VOL1 <- factor(TAM3_CF$VOL1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#VOL3 - Not required
+TAM3_CF$VOL3 <- as.factor(TAM3_CF$VOL3)
+summary(TAM3_CF$VOL3)
+TAM3_CF$VOL3 <- factor(TAM3_CF$VOL3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#VOL2 - Supervisor does not require use
+TAM3_CF$VOL2 <- as.factor(TAM3_CF$VOL2)
+summary(TAM3_CF$VOL2)
+TAM3_CF$VOL2 <- factor(TAM3_CF$VOL2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create VOL dataframe
+VOL <- subset.data.frame(TAM3_CF[52:54])
+
+VOL <- VOL %>%
+  rename("Voluntary use" = VOL1,
+         "Use not required" = VOL3,
+         "Supervisor doesn't require" = VOL2)
+
+# Create a likert object
+VOL_likert <-  likert(VOL)
+
+# Figure 
+VOLPlot <- plot(VOL_likert, ordered = FALSE, group.order = names(VOL))
+#ggsave("VOL.png", width = 10, height = 5)
+print(VOLPlot)
+
+```
+
+
+```{r Cleaning Computer Playfulness, echo=FALSE}
+
+#CPLAY1 - Characterize yourself as spontaneous with computers
+TAM3_CF$CPLAY1[TAM3_CF$CPLAY1 == ""] <- NA
+TAM3_CF$CPLAY1 <- factor(TAM3_CF$CPLAY1, levels = c("Strongly Disagree", "Moderately Disagree", "Somewhat Disagree", "Neutral (neither agree or disagree)", "Somewhat Agree", "Moderately Agree", "Strongly Agree"))
+summary(TAM3_CF$CPLAY1)
+head(TAM3_CF$CPLAY1)
+
+#CPLAY2 - Characterize yourself as creative with computers
+TAM3_CF$CPLAY2[TAM3_CF$CPLAY2 == ""] <- NA
+TAM3_CF$CPLAY2 <- factor(TAM3_CF$CPLAY2, levels = c("Strongly Disagree", "Moderately Disagree", "Somewhat Disagree", "Neutral (neither agree or disagree)", "Somewhat Agree", "Moderately Agree", "Strongly Agree"))
+summary(TAM3_CF$CPLAY2)
+head(TAM3_CF$CPLAY2)
+
+#CPLAY3 - Characterize yourself as playful with computers
+TAM3_CF$CPLAY3[TAM3_CF$CPLAY3 == ""] <- NA
+TAM3_CF$CPLAY3 <- factor(TAM3_CF$CPLAY3, levels = c("Strongly Disagree", "Moderately Disagree", "Somewhat Disagree", "Neutral (neither agree or disagree)", "Somewhat Agree", "Moderately Agree", "Strongly Agree"))
+summary(TAM3_CF$CPLAY3)
+head(TAM3_CF$CPLAY3)
+
+#CPLAY4 - Characterize yourself as unoriginal with computers
+#NEGATIVE phrasing so swapping order of factors/likert scale numbers
+TAM3_CF$CPLAY4[TAM3_CF$CPLAY4 == ""] <- NA
+TAM3_CF$CPLAY4 <- factor(TAM3_CF$CPLAY4, levels = c("Strongly Agree", "Moderately Agree", "Somewhat Agree", "Neutral (neither agree or disagree)", "Somewhat Disagree", "Moderately Disagree", "Strongly Disagree"))
+summary(TAM3_CF$CPLAY4)
+head(TAM3_CF$CPLAY4)
+
+PLAYFUL <- subset.data.frame(TAM3_CF[55:58])
+
+PLAYFUL <- PLAYFUL %>%
+  rename("spontaneous" = CPLAY1,
+         "creative" = CPLAY2,
+         "playful" = CPLAY3,
+         "original" = CPLAY4)
+
+# Create a likert object
+playful_likert <-  likert(PLAYFUL)
+
+# Figure 
+PLAYPlot <- plot(playful_likert, ordered = FALSE, group.order = names(PLAYFUL))
+#ggsave("PLAY.png", width = 10, height = 5)
+print(PLAYPlot)
+
+```
+
+```{r Cleaning Computer Anxiety, echo=FALSE}
+#High anxiety = high score
+
+#CANX1 - Do not scare me (REVERSE)
+TAM3_CF$CANX1 <- as.factor(TAM3_CF$CANX1)
+summary(TAM3_CF$CANX1)
+TAM3_CF$CANX1 <- factor(TAM3_CF$CANX1, levels = c("7", "6", "5", "4", "3", "2", "1"))
+
+#CANX2 - makes me nervous
+TAM3_CF$CANX2 <- as.factor(TAM3_CF$CANX2)
+summary(TAM3_CF$CANX2)
+TAM3_CF$CANX2 <- factor(TAM3_CF$CANX2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CANX3 - make me uncomfortable
+TAM3_CF$CANX3 <- as.factor(TAM3_CF$CANX3)
+summary(TAM3_CF$CANX3)
+TAM3_CF$CANX3 <- factor(TAM3_CF$CANX3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CANX4 - make me feel uneasy
+TAM3_CF$CANX4 <- as.factor(TAM3_CF$CANX4)
+summary(TAM3_CF$CANX4)
+TAM3_CF$CANX4 <- factor(TAM3_CF$CANX4, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create CANX dataframe
+ANXIETY <- subset.data.frame(TAM3_CF[59:62])
+
+ANXIETY <- ANXIETY %>%
+  rename("Scared" = CANX1,
+         "Nervous" = CANX2,
+         "Uncomfortable" = CANX3,
+         "Uneasy" = CANX4)
+
+# Create a likert object
+ANX_likert <-  likert(ANXIETY)
+
+# Figure 
+ANXPlot <- plot(ANX_likert, ordered = FALSE, group.order = names(ANXIETY))
+#ggsave("ANX.png", width = 10, height = 5)
+print(ANXPlot)
+
+
+```
+
+```{r Cleaning Change Fatigue, echo=TRUE}
+
+#CF1 - Too many change initiatives
+TAM3_CF$CF1 <- as.factor(TAM3_CF$CF1)
+summary(TAM3_CF$CF1)
+TAM3_CF$CF1 <- factor(TAM3_CF$CF1, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CF2 - Tired of tech changes
+TAM3_CF$CF2 <- as.factor(TAM3_CF$CF2)
+summary(TAM3_CF$CF2)
+TAM3_CF$CF2 <- factor(TAM3_CF$CF2, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CF3 - Overwhelming amount of changes
+TAM3_CF$CF3 <- as.factor(TAM3_CF$CF3)
+summary(TAM3_CF$CF3)
+TAM3_CF$CF3 <- factor(TAM3_CF$CF3, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CF4 - Asked to change tech too much
+TAM3_CF$CF4 <- as.factor(TAM3_CF$CF4)
+summary(TAM3_CF$CF4)
+TAM3_CF$CF4 <- factor(TAM3_CF$CF4, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CF5 - Always being asked to change
+TAM3_CF$CF5 <- as.factor(TAM3_CF$CF5)
+summary(TAM3_CF$CF5)
+TAM3_CF$CF5 <- factor(TAM3_CF$CF5, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#CF6 - like to see period of stability before next tech change
+TAM3_CF$CF6 <- as.factor(TAM3_CF$CF6)
+summary(TAM3_CF$CF6)
+TAM3_CF$CF6 <- factor(TAM3_CF$CF6, levels = c("1", "2", "3", "4", "5", "6", "7"))
+
+#descriptive visualization
+#Create CF dataframe
+CF <- subset.data.frame(TAM3_CF[63:68])
+
+CF <- CF %>%
+  rename("Too many change initiatives" = CF1,
+         "Tired of change" = CF2,
+         "Overwhelming amount of change" = CF3,
+         "Asked to change too much" = CF4,
+         "Always asked to change" = CF5,
+         "Want stability" = CF6)
+
+# Create a likert object
+CF_likert <-  likert(CF)
+
+# Figure 
+CFPlot <- plot(CF_likert, ordered = FALSE, group.order = names(CF))
+#ggsave("CF.png", width = 10, height = 5)
+print(CFPlot)
+```
+
+
+```{r Compiling Mean Composite Variable Scores, echo=FALSE}
+#Change factors to integers
+TAM3_CF <- lapply(TAM3_CF, as.numeric)
+
+#verify negative statements changed correctly
+head(TAM3_CF$PEC4)
+head(TAM3_CF$RES4)
+head(TAM3_CF$CPLAY4)
+head(TAM3_CF$CANX1)
+
+#Put back as dataframe
+TAM3_CF <- data.frame(TAM3_CF)
+
+#Check how many NAs per observation
+#25 people missed at least one response. 
+#7 people missed 4 or more responses
+rowSums(is.na(TAM3_CF))
+
+
+#Listwise deletion for rows with more than 3 NAs. 
+TAM3_CF_CLEAN <- TAM3_CF[rowSums(is.na(TAM3_CF)) <= 3, ] 
+#Down to 86 observations (from 93) after deletion of rows with more than 3 NAs
+
+#Check the number of NAs
+#105 NAs before NA removal
+table(is.na(TAM3_CF))
+#30 NAs after NA removal
+table(is.na(TAM3_CF_CLEAN))
+
+#Imputation is unneeded since composite scores will be completed. NAs will be removed from an individuals composite variable score. 
+
+str(TAM3_CF_CLEAN)
+summary(TAM3_CF_CLEAN)
+```
+
+## Mean Composites for Constructs
+
+A mean composite was computed to represent each construct based on the survey data. 
+
+```{r Construct Scores, echo=FALSE}
+TAM3_CF_CLEAN$USE_COMP <- apply(TAM3_CF_CLEAN[ ,1:7], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$BI_COMP <- apply(TAM3_CF_CLEAN[ ,8:15], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$PEU_COMP <- apply(TAM3_CF_CLEAN[ ,16:19], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$PU_COMP <- apply(TAM3_CF_CLEAN[ ,20:23], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$CSE_COMP <- apply(TAM3_CF_CLEAN[ ,24:27], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$PEC_COMP <- apply(TAM3_CF_CLEAN[ ,28:31], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$ENJ_COMP <- apply(TAM3_CF_CLEAN[ ,32:34], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$SN_COMP <- apply(TAM3_CF_CLEAN[ ,35:38], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$IMG_COMP <- apply(TAM3_CF_CLEAN[ ,39:41], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$REL_COMP <- apply(TAM3_CF_CLEAN[ ,42:44], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$OUT_COMP <- apply(TAM3_CF_CLEAN[ ,45:47], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$RES_COMP <- apply(TAM3_CF_CLEAN[ ,48:51], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$VOL_COMP <- apply(TAM3_CF_CLEAN[ ,52:54], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$CPLAY_COMP <- apply(TAM3_CF_CLEAN[ ,55:58], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$CANX_COMP <- apply(TAM3_CF_CLEAN[ ,59:62], MARGIN = 1, mean, na.rm=TRUE)
+TAM3_CF_CLEAN$CF_COMP <- apply(TAM3_CF_CLEAN[ ,63:68], MARGIN = 1, mean, na.rm=TRUE)
+
+TAM3_CF_COMP <- TAM3_CF_CLEAN[,c(69:84)]
+summary(TAM3_CF_COMP)
+
+TAM3_CF_COMP %>% 
+  gather(key="MesureType", value="Val") %>%
+  ggplot( aes(x=MesureType, y=Val, fill=MesureType)) +
+    geom_violin()
+
+#ggsave("Comp.png", width = 10, height = 5)
+```
+
+#Reliability Testing
+```{r Cronbach Alpha Tests, echo=FALSE}
+
+#install.packages("psy")
+library(psy)
+
+CR_USE <- cronbach(TAM3_CF_CLEAN[,1:7])
+print(CR_USE)
+CR_BI <- cronbach(TAM3_CF_CLEAN[,8:15])
+print(CR_BI)
+CR_PEU <- cronbach(TAM3_CF_CLEAN[,16:19])
+print(CR_PEU)
+CR_PU <- cronbach(TAM3_CF_CLEAN[,20:23])
+print(CR_PU)
+CR_CSE <- cronbach(TAM3_CF_CLEAN[,24:27])
+print(CR_CSE)
+CR_PEC <- cronbach(TAM3_CF_CLEAN[,28:31])
+print(CR_PEC)
+CR_ENJ <- cronbach(TAM3_CF_CLEAN[,32:34])
+print(CR_ENJ)
+CR_SN <- cronbach(TAM3_CF_CLEAN[,35:38])
+print(CR_SN)
+CR_IMG <- cronbach(TAM3_CF_CLEAN[,39:41])
+print(CR_IMG)
+CR_REL <- cronbach(TAM3_CF_CLEAN[,42:44])
+print(CR_REL)
+CR_OUT <- cronbach(TAM3_CF_CLEAN[,45:47])
+print(CR_OUT)
+CR_RES <- cronbach(TAM3_CF_CLEAN[,48:51])
+print(CR_RES)
+CR_VOL <- cronbach(TAM3_CF_CLEAN[,52:54])
+print(CR_VOL)
+CR_CPLAY <- cronbach(TAM3_CF_CLEAN[,55:58])
+print(CR_CPLAY)
+CR_CANX <- cronbach(TAM3_CF_CLEAN[,59:62])
+print(CR_CANX)
+CR_CF <- cronbach(TAM3_CF_CLEAN[,63:68])
+
+```
+#Descriptive Statistics
+
+```{r Descriptive Stats, echo=TRUE}
+
+library(psych)
+corr.test(TAM3_CF_COMP)
+cov(TAM3_CF_COMP)
+
+library(reshape2)
+TAM3_COR <- round(cor(TAM3_CF_COMP), 2)
+print(TAM3_COR)
+MELT_TAM3_COR <- melt(TAM3_COR)
+head(TAM3_COR)
+
+ggplot(data = MELT_TAM3_COR, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+describe(TAM3_CF_COMP)
+
+
+install.packages("Hmisc")
+library(Hmisc)
+CORR_DATA <- rcorr(as.matrix(TAM3_CF_COMP))
+
+library(ggcorrplot)
+heatmap <- ggcorrplot(TAM3_COR, hc.order = TRUE, type = "lower",
+            outline.col = "white",
+            ggtheme = ggplot2::theme_gray,
+            colors = c("#6D9EC1", "white", "#E46726"))
+
+print(heatmap)
+print(CORR_DATA)
+#ggsave("heatmap.png")
+
+```
+
+
+
+
+
+
+
+
+
+
